@@ -85,4 +85,20 @@ public class InterfazGrafica extends JFrame {
     public void reemplazarBarajaConEmpty() {
         barajaLabel.setIcon(escalarImagen(EMPTY_IMAGE));
     }
+
+    public void reducirCartasBack(int jugador, int cartasRestantes) {
+        JLabel[] cartasJugador = (jugador == 1) ? cartasJugador1 : cartasJugador2;
+
+        // Recorremos las 6 posibles posiciones de cartas del jugador
+        for (int i = 0; i < 6; i++) {
+            if (i < 6 - cartasRestantes) {
+                // Si la posición es mayor al número de cartas restantes, mostramos la carta vacía
+                cartasJugador[i].setIcon(escalarImagen(EMPTY_IMAGE));
+            } else {
+                // Si aún hay cartas, mantenemos el dorso de la carta
+                cartasJugador[i].setIcon(escalarImagen(BACK_IMAGE));
+            }
+        }
+    }
+
 }
