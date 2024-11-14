@@ -51,15 +51,19 @@ public class Juego {
     }
 
     public void jugar() {
+        // Apartar la carta de triunfo al inicio y dejar las 26 cartas restantes
+        Carta cartaTriunfo = baraja.robar();  // Extraer la carta de triunfo
+        mesa.mostrarCartaTriunfo(cartaTriunfo);  // Mostrar la carta de triunfo en la mesa
+
         Jugador jugadorActual = jugador1;  // Jugador 1 inicia
         Jugador jugadorOponente = jugador2;  // Jugador 2 es el oponente
-        boolean cartasEnBaraja = baraja.tieneCartas();  // Comprobamos si hay cartas en la baraja
+        int cartasRestantes = 26;  // Cartas restantes después de apartar la carta de triunfo
 
         // Continuamos mientras alguno de los jugadores tenga cartas
         while (jugador1.tieneCartas() || jugador2.tieneCartas()) {
 
-            // FORZAR ALTERNANCIA cuando ya no haya cartas en la baraja
-            if (!cartasEnBaraja) {
+            // Alternar los turnos estrictamente si ya no hay cartas en la baraja
+            if (cartasRestantes == 0) {
                 Jugador temp = jugadorActual;
                 jugadorActual = jugadorOponente;
                 jugadorOponente = temp;
@@ -124,8 +128,8 @@ public class Juego {
                 interfaz.actualizarPuntajes(jugador1.getNombre() + ": " + jugador1.getPuntaje() + " puntos",
                         jugador2.getNombre() + ": " + jugador2.getPuntaje() + " puntos");
 
-                // El ganador comienza solo si aún hay cartas en la baraja
-                if (cartasEnBaraja) {
+                // El ganador comienza solo si aún hay cartas para repartir
+                if (cartasRestantes > 0) {
                     jugadorActual = ganador;
                     jugadorOponente = (jugadorActual == jugador1) ? jugador2 : jugador1;
                 }
@@ -134,16 +138,17 @@ public class Juego {
             // Limpiar la mesa para la siguiente ronda
             mesa.limpiarMesa();
 
-            // Repartir cartas mientras haya cartas en la baraja
-            if (cartasEnBaraja && baraja.tieneCartas()) {
+            // Repartir las 26 cartas restantes
+            if (cartasRestantes > 0) {
                 jugadorActual.recibirCarta(baraja.robar());
                 jugadorOponente.recibirCarta(baraja.robar());
+                cartasRestantes -= 2;
             } else {
-                // Si no hay más cartas en la baraja, alternar los turnos equitativamente
-                cartasEnBaraja = false;
+                // Cuando ya no quedan cartas para repartir, alternar los turnos equitativamente
+                cartasRestantes = 0;
             }
 
-            // Actualizar la interfaz para reflejar la cantidad de cartas restantes
+            // Actualizar la interfaz para reflejar las cartas restantes
             interfaz.restaurarCartasBack(jugadorActual == jugador1 ? 0 : 1);
             interfaz.restaurarCartasBack(jugadorOponente == jugador1 ? 0 : 1);
         }
@@ -161,7 +166,8 @@ public class Juego {
         }
         return false;
     }
-    
+
+
     private Jugador determinarGanador(Carta carta1, Carta carta2) {
         if (carta1.getFigura().equals(carta2.getFigura())) {
             return (carta1.getValor() > carta2.getValor()) ? jugador1 : jugador2;
