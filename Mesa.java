@@ -40,7 +40,7 @@ public class Mesa {
     // Método para mostrar la carta de triunfo en la interfaz gráfica
     public void mostrarCartaTriunfo(Carta cartaTriunfo) {
         if (etiquetaCartaTriunfo != null) {
-            // Suponemos que la clase Carta tiene un método getImagen() que devuelve la imagen de la carta
+            
             ImageIcon iconoCarta = new ImageIcon(cartaTriunfo.getImagen());  // Creamos un icono con la imagen de la carta de triunfo
             etiquetaCartaTriunfo.setIcon(iconoCarta);  // Mostramos la imagen en el JLabel
             etiquetaCartaTriunfo.repaint();  // Repintamos el JLabel para asegurar que se actualice en la interfaz gráfica
