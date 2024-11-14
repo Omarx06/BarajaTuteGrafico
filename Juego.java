@@ -51,61 +51,117 @@ public class Juego {
     }
 
     public void jugar() {
-        int turno = 1;
+        Jugador jugadorActual = jugador1;  // Jugador 1 inicia
+        Jugador jugadorOponente = jugador2;  // Jugador 2 es el oponente
+        boolean cartasEnBaraja = baraja.tieneCartas();  // Comprobamos si hay cartas en la baraja
 
-        while (jugador1.tieneCartas() && jugador2.tieneCartas()) {
-            Jugador jugadorActual = (turno % 2 == 1) ? jugador1 : jugador2;
-            Jugador jugadorOponente = (turno % 2 == 1) ? jugador2 : jugador1;
+        // Continuamos mientras alguno de los jugadores tenga cartas
+        while (jugador1.tieneCartas() || jugador2.tieneCartas()) {
 
-            // Mostrar cartas ocultas para ambos jugadores al inicio de la ronda
-            interfaz.restaurarCartasBack(1);
-            interfaz.restaurarCartasBack(2);
-
-            // Mostrar cartas al jugador actual
-            int index = JOptionPane.showOptionDialog(null, jugadorActual.getNombre() + ", elige una carta para jugar:",
-                    "Turno de " + jugadorActual.getNombre(), JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
-                    null, jugadorActual.getMazo().toArray(), null);
-
-            Carta cartaJugada = jugadorActual.jugarCarta(index);
-            mesa.ponerCarta(cartaJugada);
-            interfaz.mostrarCartaSeleccionada(turno % 2, index, cartaJugada);
-
-            // Turno del jugador oponente
-            index = JOptionPane.showOptionDialog(null, jugadorOponente.getNombre() + ", elige una carta para jugar:",
-                    "Turno de " + jugadorOponente.getNombre(), JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
-                    null, jugadorOponente.getMazo().toArray(), null);
-
-            Carta cartaOponente = jugadorOponente.jugarCarta(index);
-            mesa.ponerCarta(cartaOponente);
-            interfaz.mostrarCartaSeleccionada((turno + 1) % 2, index, cartaOponente);
-
-            // Comparar cartas y determinar ganador
-            Jugador ganador = determinarGanador(cartaJugada, cartaOponente);
-            JOptionPane.showMessageDialog(null, ganador.getNombre() + " ganó la baza!");
-
-            // Actualizar puntaje y bazas
-            ganador.recogerBaza(mesa.getCartasJugadas());
-            ganador.sumarPuntos(calcularPuntos(cartaJugada, cartaOponente));
-            interfaz.actualizarPuntajes(jugador1.getNombre() + ": " + jugador1.getPuntaje() + " puntos",
-                    jugador2.getNombre() + ": " + jugador2.getPuntaje() + " puntos");
-
-            // Limpiar mesa y repartir una nueva carta si hay cartas disponibles
-            mesa.limpiarMesa();
-            if (baraja.tieneCartas()) {
-                // Repartir una carta adicional a cada jugador
-                jugadorActual.recibirCarta(baraja.robar());
-                jugadorOponente.recibirCarta(baraja.robar());
-                interfaz.restaurarCartasBack(turno % 2);
-                interfaz.restaurarCartasBack((turno + 1) % 2);
+            // FORZAR ALTERNANCIA cuando ya no haya cartas en la baraja
+            if (!cartasEnBaraja) {
+                Jugador temp = jugadorActual;
+                jugadorActual = jugadorOponente;
+                jugadorOponente = temp;
             }
 
-            turno++;
+            // Turno del jugador actual
+            Carta cartaJugada = null;
+            if (jugadorActual.tieneCartas()) {
+                if (jugadorActual.getMazo().size() == 1) {
+                    // Si solo queda una carta, la juega automáticamente
+                    cartaJugada = jugadorActual.jugarCarta(0);
+                } else {
+                    Object[] opciones = jugadorActual.getMazo().toArray();
+
+                    // Mostrar opciones de cartas disponibles
+                    if (opciones != null && opciones.length > 0 && !contieneNull(opciones)) {
+                        int index = JOptionPane.showOptionDialog(null, jugadorActual.getNombre() + ", elige una carta para jugar:",
+                                "Turno de " + jugadorActual.getNombre(), JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
+                                null, opciones, opciones[0]);
+                        cartaJugada = jugadorActual.jugarCarta(index);
+                    }
+                }
+            }
+
+            if (cartaJugada != null) {
+                mesa.ponerCarta(cartaJugada);  // Colocar la carta del jugador en la mesa
+                interfaz.mostrarCartaSeleccionada(jugadorActual == jugador1 ? 0 : 1, 0, cartaJugada);  // Mostrar la carta jugada
+            }
+
+            // Turno del jugador oponente
+            Carta cartaOponente = null;
+            if (jugadorOponente.tieneCartas()) {
+                if (jugadorOponente.getMazo().size() == 1) {
+                    // Si solo queda una carta, la juega automáticamente
+                    cartaOponente = jugadorOponente.jugarCarta(0);
+                } else {
+                    Object[] opciones = jugadorOponente.getMazo().toArray();
+
+                    // Mostrar opciones de cartas disponibles
+                    if (opciones != null && opciones.length > 0 && !contieneNull(opciones)) {
+                        int index = JOptionPane.showOptionDialog(null, jugadorOponente.getNombre() + ", elige una carta para jugar:",
+                                "Turno de " + jugadorOponente.getNombre(), JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
+                                null, opciones, opciones[0]);
+                        cartaOponente = jugadorOponente.jugarCarta(index);
+                    }
+                }
+            }
+
+            if (cartaOponente != null) {
+                mesa.ponerCarta(cartaOponente);  // Colocar la carta del oponente en la mesa
+                interfaz.mostrarCartaSeleccionada(jugadorOponente == jugador1 ? 0 : 1, 0, cartaOponente);  // Mostrar la carta jugada
+            }
+
+            // Comparar cartas jugadas y determinar el ganador de la baza
+            if (cartaJugada != null && cartaOponente != null) {
+                Jugador ganador = determinarGanador(cartaJugada, cartaOponente);
+                JOptionPane.showMessageDialog(null, ganador.getNombre() + " ganó la baza!");
+
+                // Actualizar puntaje y recoger las cartas
+                ganador.recogerBaza(mesa.getCartasJugadas());
+                ganador.sumarPuntos(calcularPuntos(cartaJugada, cartaOponente));
+                interfaz.actualizarPuntajes(jugador1.getNombre() + ": " + jugador1.getPuntaje() + " puntos",
+                        jugador2.getNombre() + ": " + jugador2.getPuntaje() + " puntos");
+
+                // El ganador comienza solo si aún hay cartas en la baraja
+                if (cartasEnBaraja) {
+                    jugadorActual = ganador;
+                    jugadorOponente = (jugadorActual == jugador1) ? jugador2 : jugador1;
+                }
+            }
+
+            // Limpiar la mesa para la siguiente ronda
+            mesa.limpiarMesa();
+
+            // Repartir cartas mientras haya cartas en la baraja
+            if (cartasEnBaraja && baraja.tieneCartas()) {
+                jugadorActual.recibirCarta(baraja.robar());
+                jugadorOponente.recibirCarta(baraja.robar());
+            } else {
+                // Si no hay más cartas en la baraja, alternar los turnos equitativamente
+                cartasEnBaraja = false;
+            }
+
+            // Actualizar la interfaz para reflejar la cantidad de cartas restantes
+            interfaz.restaurarCartasBack(jugadorActual == jugador1 ? 0 : 1);
+            interfaz.restaurarCartasBack(jugadorOponente == jugador1 ? 0 : 1);
         }
 
+        // Mostrar el resultado final cuando ambos jugadores se queden sin cartas
         mostrarResultadoFinal();
     }
 
-
+    // Método auxiliar para validar que no haya valores nulos en el arreglo de opciones
+    private boolean contieneNull(Object[] opciones) {
+        for (Object opcion : opciones) {
+            if (opcion == null) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
     private Jugador determinarGanador(Carta carta1, Carta carta2) {
         if (carta1.getFigura().equals(carta2.getFigura())) {
             return (carta1.getValor() > carta2.getValor()) ? jugador1 : jugador2;
@@ -134,16 +190,20 @@ public class Juego {
     }
 
     private void mostrarResultadoFinal() {
-        System.out.println("Resultado final:");
-        System.out.println(jugador1.getNombre() + ": " + jugador1.getPuntaje() + " puntos");
-        System.out.println(jugador2.getNombre() + ": " + jugador2.getPuntaje() + " puntos");
+        String resultado = "Resultado final:\n" +
+                jugador1.getNombre() + ": " + jugador1.getPuntaje() + " puntos\n" +
+                jugador2.getNombre() + ": " + jugador2.getPuntaje() + " puntos\n";
 
         if (jugador1.getPuntaje() > jugador2.getPuntaje()) {
-            System.out.println("¡" + jugador1.getNombre() + " ha ganado el juego!");
+            resultado += "¡" + jugador1.getNombre() + " ha ganado el juego!";
         } else if (jugador2.getPuntaje() > jugador1.getPuntaje()) {
-            System.out.println("¡" + jugador2.getNombre() + " ha ganado el juego!");
+            resultado += "¡" + jugador2.getNombre() + " ha ganado el juego!";
         } else {
-            System.out.println("¡El juego terminó en empate!");
+            resultado += "¡El juego terminó en empate!";
         }
+
+        // Mostrar el resultado en un JOptionPane
+        JOptionPane.showMessageDialog(null, resultado, "Resultado Final", JOptionPane.INFORMATION_MESSAGE);
     }
+
 }
